@@ -36,7 +36,7 @@
 #define FIRMWARE_JSON_URL "https://api.ipsw.me/v2.1/firmwares.json/condensed"
 #define FIRMWARE_OTA_JSON_URL "https://api.ipsw.me/v2.1/ota.json/condensed"
 
-#define NONCELEN_BASEBAND 20 
+#define NONCELEN_BASEBAND 20
 #define NONCELEN_SEP      20
 
 #define swapchar(a,b) ((a) ^= (b),(b) ^= (a),(a) ^= (b)) //swaps a and b, unless they are the same variable
@@ -63,7 +63,7 @@ static const char *win_pathvars[]={
 static const char *win_path_get(enum paths path){
     if (!win_path_didinit) memset(win_paths, 0, sizeof(win_paths));
     if (win_paths[path]) return win_paths[path];
-    
+
     const char *tmp = getenv("TMP");
     if (tmp && *tmp){
         size_t len = strlen(tmp) + strlen(win_pathvars[path]) + 1;
@@ -73,7 +73,7 @@ static const char *win_path_get(enum paths path){
         strncat((char*)win_paths[path], win_pathvars[path], strlen(win_pathvars[path]));
         return win_paths[path];
     }
-    
+
     error("DEBUG: tmp=%s win_paths[path]=%s\n",tmp,win_paths[path]);
     error("FATAL could not get TMP path. exiting!\n");
     exit(123);
@@ -117,7 +117,7 @@ static struct bbdevice bbdevices[] = {
     {"iPod4,1", 0, 0},
     {"iPod5,1", 0, 0},
     {"iPod7,1", 0, 0},
-    
+
     {"iPhone2,1", 0, 0},
     {"iPhone3,1", 257, 12},
     {"iPhone3,3", 2, 4},
@@ -143,7 +143,7 @@ static struct bbdevice bbdevices[] = {
     {"iPhone10,4", 524245983, 12},
     {"iPhone10,5", 524245983, 12},
     {"iPhone10,6", 524245983, 12},
-    
+
     {"iPad1,1", 0, 0},
     {"iPad2,1", 0, 0},
     {"iPad2,2", 257, 12},
@@ -170,7 +170,7 @@ static struct bbdevice bbdevices[] = {
     {"iPad6,8", 3840149528, 4},
     {"iPad6,11", 0, 0},
     {"iPad7,4", 2315222105, 4},
-    
+
     {"AppleTV1,1", 0, 0},
     {"AppleTV2,1", 0, 0},
     {"AppleTV3,1", 0, 0},
@@ -230,10 +230,10 @@ const char *getBoardconfigFromModel(const char *model){
             }else
                 rt = table->hardware_model;
         }
-        
+
         table++;
     }
-    
+
     return rt;
 }
 
@@ -250,17 +250,17 @@ const char *getModelFromBoardconfig(const char *boardconfig){
             }else
                 rt = table->product_type;
         }
-        
+
         table++;
     }
-    
+
     return rt;
 }
 
 plist_t getBuildidentityWithBoardconfig(plist_t buildManifest, const char *boardconfig, int isUpdateInstall){
     plist_t rt = NULL;
 #define reterror(a ... ) {error(a); rt = NULL; goto error;}
-    
+
     plist_t buildidentities = plist_dict_get_item(buildManifest, "BuildIdentities");
     if (!buildidentities || plist_get_node_type(buildidentities) != PLIST_ARRAY){
         reterror("[TSSR] Error: could not get BuildIdentities\n");
@@ -288,7 +288,7 @@ plist_t getBuildidentityWithBoardconfig(plist_t buildManifest, const char *board
             rt = NULL;
             continue;
         }
-        
+
         plist_t DeviceClass = plist_dict_get_item(infodict, "DeviceClass");
         if (!DeviceClass || plist_get_node_type(DeviceClass) != PLIST_STRING){
             reterror("[TSSR] Error: could not get DeviceClass\n");
@@ -298,9 +298,9 @@ plist_t getBuildidentityWithBoardconfig(plist_t buildManifest, const char *board
             rt = NULL;
         else
             break;
-        
+
     }
-    
+
 error:
     return rt;
 #undef reterror
@@ -309,13 +309,13 @@ error:
 plist_t getBuildidentity(plist_t buildManifest, const char *model, int isUpdateInstall){
     plist_t rt = NULL;
 #define reterror(a ... ) {error(a); rt = NULL; goto error;}
-    
+
     const char *boardconfig = getBoardconfigFromModel(model);
     if (!boardconfig)
         reterror("[TSSR] cant find boardconfig for device=%s please manuall use --boardconfig\n",model);
-    
+
     rt = getBuildidentityWithBoardconfig(buildManifest, boardconfig, isUpdateInstall);
-    
+
 error:
     return rt;
 #undef reterror
@@ -325,11 +325,11 @@ error:
 #pragma mark json functions
 
 long parseTokens(const char *json, jssytok_t **tokens){
-    
+
     log("[JSON] counting elements\n");
     long tokensCnt = jssy_parse(json, strlen(json), NULL, 0);
     *tokens = (jssytok_t*)malloc(sizeof(jssytok_t) * tokensCnt);
-    
+
     log("[JSON] parsing elements\n");
     return jssy_parse(json, strlen(json), *tokens, sizeof(jssytok_t) * tokensCnt);
 }
@@ -341,43 +341,43 @@ t_versionURL *getFirmwareUrls(const char *deviceModel, t_iosVersion *versVals, j
     t_versionURL *rets = NULL;
     const t_versionURL *rets_base = NULL;
     unsigned retcounter = 0;
-    
+
     jssytok_t *firmwares = getFirmwaresForDevice(deviceModel, tokens, versVals->isOta);
     const char *versstring = (versVals->buildID) ? versVals->buildID : versVals->version;
-    
+
     if (!firmwares)
         return error("[TSSC] device '%s' could not be found in devicelist\n", deviceModel), NULL;
-    
+
 malloc_rets:
     if (retcounter)
         memset(rets = (t_versionURL*)malloc(sizeof(t_versionURL)*(retcounter+1)), 0, sizeof(t_versionURL)*(retcounter+1));
     rets_base = rets;
-    
+
 
     jssytok_t *tmp = firmwares->subval;
     for (size_t i=0; i<firmwares->size; tmp=tmp->next, i++) {
         jssytok_t *ios = jssy_dictGetValueForKey(tmp, (versVals->buildID) ? "buildid" : "version");
-        
+
         if (ios->size == strlen(versstring) && strncmp(versstring, ios->value, ios->size) == 0) {
-            
+
             if (versVals->isOta) {
                 jssytok_t *releaseType = NULL;
                 if (versVals->useBeta && !(releaseType = jssy_dictGetValueForKey(tmp, "releasetype"))) continue;
                 else if (!versVals->useBeta);
                 else if (strncmp(releaseType->value, "Beta", releaseType->size) != 0) continue;
             }
-            
+
             jssytok_t *url = jssy_dictGetValueForKey(tmp, "url");
             jssytok_t *i_vers = jssy_dictGetValueForKey(tmp, "version");
             jssytok_t *i_build = jssy_dictGetValueForKey(tmp, "buildid");
-            
+
             if (!versVals->version){
                 versVals->version = (char*)malloc(i_vers->size+1);
                 memcpy(versVals->version, i_vers->value, i_vers->size);
                 versVals->version[i_vers->size] = '\0';
             }
-            
-            
+
+
             if (!rets) retcounter++;
             else{
                 for (int i=0; rets_base[i].buildID; i++) {
@@ -387,16 +387,16 @@ malloc_rets:
                         break;
                     }
                 }
-                
+
                 info("[TSSC] got firmwareurl for iOS %.*s build %.*s\n",(int)i_vers->size, i_vers->value,(int)i_build->size, i_build->value);
                 rets->version = (char*)malloc(i_vers->size+1);
                 memcpy(rets->version, i_vers->value, i_vers->size);
                 rets->version[i_vers->size] = '\0';
-                
+
                 rets->buildID = (char*)malloc(i_build->size+1);
                 memcpy(rets->buildID, i_build->value, i_build->size);
                 rets->buildID[i_build->size] = '\0';
-                
+
                 rets->url = (char*)malloc(url->size+1);
                 memcpy(rets->url, url->value, url->size);
                 rets->url[url->size] = '\0';
@@ -404,12 +404,12 @@ malloc_rets:
             }
         }
     }
-    
-    
+
+
     if (!retcounter) return NULL;
     else if (!rets) goto malloc_rets;
-    
-    
+
+
     return (t_versionURL*)rets_base;
 }
 
@@ -441,13 +441,13 @@ int downloadPartialzip(const char *url, const char *file, const char *dst){
 
 char *getBuildManifest(char *url, const char *device, const char *version, const char *buildID, int isOta){
     struct stat st = {0};
-    
+
     size_t len = strlen(MANIFEST_SAVE_PATH) + strlen("/__") + strlen(device) + strlen(version) +1;
     if (buildID) len += strlen(buildID);
     if (isOta) len += strlen("ota");
     char *fileDir = malloc(len);
     memset(fileDir, 0, len);
-    
+
     strncat(fileDir, MANIFEST_SAVE_PATH, strlen(MANIFEST_SAVE_PATH));
     strncat(fileDir, DIRECTORY_DELIMITER_STR, 1);
     strncat(fileDir, device, strlen(device));
@@ -457,25 +457,25 @@ char *getBuildManifest(char *url, const char *device, const char *version, const
         strncat(fileDir, "_", strlen("_"));
         strncat(fileDir, buildID, strlen(buildID));
     }
-    
+
     if (isOta) strncat(fileDir, "ota", strlen("ota"));
-    
+
     memset(&st, 0, sizeof(st));
     if (stat(MANIFEST_SAVE_PATH, &st) == -1) __mkdir(MANIFEST_SAVE_PATH, 0700);
-    
+
     //gen name
     char *name = fileDir + strlen(fileDir);
     while (*--name != DIRECTORY_DELIMITER_CHR);
     name ++;
-    
+
     //get file
     FILE *f = fopen(fileDir, "rb");
     if (!url) {
         if (!f || nocache) return NULL;
         info("[TSSC] using cached Buildmanifest for %s\n",name);
     }else info("[TSSC] opening Buildmanifest for %s\n",name);
-    
-    
+
+
     if (!f || nocache){
         //download if it isn't there
         if (downloadPartialzip(url, (isOta) ? "AssetData/boot/BuildManifest.plist" : "BuildManifest.plist", fileDir)){
@@ -487,25 +487,25 @@ char *getBuildManifest(char *url, const char *device, const char *version, const
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
-    
+
     //load it
     char *buildmanifest = malloc(fsize + 1);
     fread(buildmanifest, fsize, 1, f);
     buildmanifest[fsize] = '\0';
     fclose(f);
-    
-    
+
+
     free(fileDir);
     return buildmanifest;
 }
 
 t_bbdevice getBBDeviceInfo(const char *deviceModel){
-    
+
     t_bbdevice bbdevs = bbdevices_get_all();
-    
+
     while (bbdevs->deviceModel && strcasecmp(bbdevs->deviceModel, deviceModel) != 0)
         bbdevs++;
-    
+
     return bbdevs;
 }
 
@@ -523,25 +523,25 @@ void getRandNum(char *dst, size_t size, int base){
 #pragma mark tss functions
 
 int tss_populate_devicevals(plist_t tssreq, uint64_t ecid, char *nonce, size_t nonce_size, char *sep_nonce, size_t sep_nonce_size, int image4supported){
-    
+
     plist_dict_set_item(tssreq, "ApECID", plist_new_uint(ecid)); //0000000000000000
     if (nonce) {
         plist_dict_set_item(tssreq, "ApNonce", plist_new_data(nonce, nonce_size));//aa aa aa aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 aa
     }
-    
+
     if (sep_nonce) {//aa aa aa aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 aa
         plist_dict_set_item(tssreq, "ApSepNonce", plist_new_data(sep_nonce, sep_nonce_size));
     }
-    
+
     plist_dict_set_item(tssreq, "ApProductionMode", plist_new_bool(1));
-    
+
     if (image4supported) {
         plist_dict_set_item(tssreq, "ApSecurityMode", plist_new_bool(1));
         plist_dict_set_item(tssreq, "ApSupportsImg4", plist_new_bool(1));
     } else {
         plist_dict_set_item(tssreq, "ApSupportsImg4", plist_new_bool(0));
     }
-    
+
     return 0;
 }
 
@@ -552,13 +552,13 @@ int tss_populate_basebandvals(plist_t tssreq, plist_t tssparameters, int64_t BbG
     char bbnonce[NONCELEN_BASEBAND+1];
     char *bbsnum = (char*)malloc(bbsnumSize);
     int64_t BbChipID = 0;
-    
-    
+
+
     getRandNum(bbsnum, bbsnumSize, 256);
     getRandNum(bbnonce, NONCELEN_BASEBAND, 256);
     srand((unsigned int)time(NULL));
     int n=0; for (int i=1; i<7; i++) BbChipID += (rand() % 10) * pow(10, ++n);
-    
+
 
     /* BasebandNonce not required */
 //    plist_dict_set_item(parameters, "BbNonce", plist_new_data(bbnonce, NONCELEN_BASEBAND));
@@ -568,7 +568,7 @@ int tss_populate_basebandvals(plist_t tssreq, plist_t tssparameters, int64_t BbG
     if (tss_request_add_baseband_tags(tssreq, parameters, NULL) < 0) {
         reterror("[TSSR] Error: Failed to add baseband tags to TSS request\n");
     }
-    
+
 error:
     free(bbsnum);
     return ret;
@@ -578,18 +578,18 @@ error:
 int parseHex(const char *nonce, size_t *parsedLen, char *ret, size_t *retSize){
     size_t nonceLen = strlen(nonce);
     nonceLen = nonceLen/2 + nonceLen%2; //one byte more if len is odd
-    
+
     if (retSize) *retSize = (nonceLen+1)*sizeof(char);
     if (!ret) return 0;
-    
+
     memset(ret, 0, nonceLen+1);
     unsigned int nlen = 0;
-    
+
     int next = strlen(nonce)%2 == 0;
     char tmp = 0;
     while (*nonce) {
         char c = *(nonce++);
-        
+
         tmp *=16;
         if (c >= '0' && c<='9') {
             tmp += c - '0';
@@ -602,7 +602,7 @@ int parseHex(const char *nonce, size_t *parsedLen, char *ret, size_t *retSize){
         }
         if ((next =! next) && nlen < nonceLen) ret[nlen++] = tmp,tmp=0;
     }
-    
+
     if (parsedLen) *parsedLen = nlen;
     return 0;
 }
@@ -618,7 +618,7 @@ int tss_populate_random(plist_t tssreq, int is64bit, t_devicevals *devVals){
             strncasecmp(devVals->deviceModel, "iPad7,", strlen("iPad7,")) == 0 ||
             strncasecmp(devVals->deviceModel, "AppleTV6,", strlen("AppleTV6,")) == 0)
         nonceLen = 32;
-    
+
     int n=0;
     srand((unsigned int)time(NULL));
     if (!devVals->ecid) for (int i=0; i<16; i++) devVals->ecid += (rand() % 10) * pow(10, n++);
@@ -634,7 +634,7 @@ int tss_populate_random(plist_t tssreq, int is64bit, t_devicevals *devVals){
             //this is a pre iPhone7 device
             //nonce is derived from generator with SHA1
             unsigned char zz[9] = {0};
-            
+
             for (int i=0; i<sizeof(devVals->generator)-1; i++) {
                 if (!devVals->generator[i]) goto makegen;
             }
@@ -653,7 +653,7 @@ int tss_populate_random(plist_t tssreq, int is64bit, t_devicevals *devVals){
         }else if (nonceLen == 32){
             unsigned char zz[8] = {0};
             unsigned char genHash[48]; //SHA384 digest length
-            
+
             for (int i=0; i<sizeof(devVals->generator)-1; i++) {
                 if (!devVals->generator[i]) goto makegen2;
             }
@@ -674,7 +674,7 @@ int tss_populate_random(plist_t tssreq, int is64bit, t_devicevals *devVals){
             return error("[TSSR] Automatic generator->nonce calculation failed. Unknown device with noncelen=%u\n",(unsigned int)nonceLen),-1;
         }
     }
-    
+
     if (devVals->sepnonce){
         if (devVals->parsedSepnonceLen != NONCELEN_SEP)
             return error("[TSSR] parsed SEPNoncelen != requiredSEPNoncelen (%u != %u)",(unsigned int)devVals->parsedSepnonceLen,(unsigned int)NONCELEN_SEP),-1;
@@ -682,14 +682,14 @@ int tss_populate_random(plist_t tssreq, int is64bit, t_devicevals *devVals){
         devVals->sepnonce = (char*)malloc((devVals->parsedSepnonceLen = NONCELEN_SEP) +1);
         getRandNum(devVals->sepnonce, devVals->parsedSepnonceLen, 256);
     }
-    
+
     if (devVals->apnonce) devVals->apnonce[nonceLen] = '\0';
     devVals->sepnonce[NONCELEN_SEP] = '\0';
-    
+
     debug("[TSSR] ecid=%llu\n",devVals->ecid);
     debug("[TSSR] nonce=%s\n",devVals->apnonce);
     debug("[TSSR] sepnonce=%s\n",devVals->sepnonce);
-    
+
     int rt = tss_populate_devicevals(tssreq, devVals->ecid, devVals->apnonce, devVals->parsedApnonceLen, devVals->sepnonce, devVals->parsedSepnonceLen, is64bit);
     return rt;
 }
@@ -704,7 +704,7 @@ int tssrequest(plist_t *tssreqret, char *buildManifest, t_devicevals *devVals, t
     plist_t tssreq = tss_request_new(NULL);
     plist_t id0 = NULL;
     plist_from_xml(buildManifest, (unsigned)strlen(buildManifest), &manifest);
-    
+
 getID0:
     id0 = (devVals->deviceBoard)
                 ? getBuildidentityWithBoardconfig(manifest, devVals->deviceBoard, devVals->isUpdateInstall)
@@ -715,7 +715,7 @@ getID0:
         devVals->installType = kInstallTypeUpdate;
         goto getID0;
     }
-    
+
     if (!id0 || plist_get_node_type(id0) != PLIST_DICT){
         reterror("[TSSR] Error: could not get id0 for installType=%s\n",devVals->isUpdateInstall ? "Update" : "Erase");
     }
@@ -725,19 +725,19 @@ getID0:
     }
     plist_t sep = plist_dict_get_item(manifestdict, "SEP");
     int is64Bit = !(!sep || plist_get_node_type(sep) != PLIST_DICT);
-    
+
     if (tss_populate_random(tssparameter,is64Bit,devVals))
         reterror("[TSSR] failed to populate tss request\n");
-    
+
     tss_parameters_add_from_manifest(tssparameter, id0);
     if (tss_request_add_common_tags(tssreq, tssparameter, NULL) < 0) {
         reterror("[TSSR] ERROR: Unable to add common tags to TSS request\n");
     }
-    
+
     if (tss_request_add_ap_tags(tssreq, tssparameter, NULL) < 0) {
         reterror("[TSSR] ERROR: Unable to add common tags to TSS request\n");
     }
-    
+
     if (is64Bit) {
         if (tss_request_add_ap_img4_tags(tssreq, tssparameter) < 0) {
             reterror("[TSSR] ERROR: Unable to add img4 tags to TSS request\n");
@@ -784,7 +784,7 @@ getID0:
     }else{
         info("[TSSR] User specified not to request a Baseband ticket.\n");
     }
-    
+
     *tssreqret = tssreq;
 error:
     if (manifest) plist_free(manifest);
@@ -801,13 +801,13 @@ int isManifestBufSignedForDevice(char *buildManifestBuffer, t_devicevals *devVal
     plist_t apticket = NULL;
     plist_t apticket2 = NULL;
     plist_t apticket3 = NULL;
-    
+
     if (tssrequest(&tssreq, buildManifestBuffer, devVals, basebandMode))
         reterror("[TSSR] faild to build tssrequest\n");
 
     isSigned = ((apticket = tss_request_send(tssreq, NULL)) > 0);
 
-    
+
     if (print_tss_response) debug_plist(apticket);
     if (isSigned && save_shshblobs){
         if (!devVals->installType){
@@ -839,7 +839,7 @@ int isManifestBufSignedForDevice(char *buildManifestBuffer, t_devicevals *devVal
             devVals->apnonce = apnonce;
             devVals->installType = installType;
         }
-            
+
         plist_t manifest = 0;
         plist_from_xml(buildManifestBuffer, (unsigned)strlen(buildManifestBuffer), &manifest);
         plist_t build = plist_dict_get_item(manifest, "ProductBuildVersion");
@@ -848,12 +848,12 @@ int isManifestBufSignedForDevice(char *buildManifestBuffer, t_devicevals *devVal
         plist_t pvers = plist_dict_get_item(manifest, "ProductVersion");
         char *cpvers = 0;
         plist_get_string_val(pvers, &cpvers);
-        
+
         plist_t pecid = plist_dict_get_item(tssreq, "ApECID");
         plist_get_uint_val(pecid, &devVals->ecid);
         char *cecid = ecid_to_string(devVals->ecid);
-        
-        
+
+
         uint32_t size = 0;
         char* data = NULL;
         if (*devVals->generator)
@@ -863,38 +863,38 @@ int isManifestBufSignedForDevice(char *buildManifestBuffer, t_devicevals *devVal
         if (apticket3)
             plist_dict_set_item(apticket, "noNonce", apticket3);
         plist_to_xml(apticket, &data, &size);
-        
-        
+
+
         char *apnonce = "";
         size_t apnonceLen = 0;
-        
+
         if ((apnonceLen = devVals->parsedApnonceLen*2)){
             apnonce = (char*)malloc(apnonceLen+1);
             memset(apnonce, 0, apnonceLen+1);
             for (int i = 0; i < apnonceLen; i+=2)
                 snprintf(&apnonce[i], apnonceLen-i+1, "%02x",((unsigned char*)devVals->apnonce)[i/2]);
         }
-        
+
         size_t tmpDeviceNameSize = strlen(devVals->deviceModel) + strlen("_") + 1;
         if (devVals->deviceBoard) tmpDeviceNameSize += strlen(devVals->deviceBoard);
-        
+
         char *tmpDevicename = (char *)malloc(tmpDeviceNameSize);
         memset(tmpDevicename, 0, tmpDeviceNameSize);
         snprintf(tmpDevicename, tmpDeviceNameSize, "%s", devVals->deviceModel);
         if (devVals->deviceBoard) snprintf(tmpDevicename+strlen(tmpDevicename), tmpDeviceNameSize-strlen(tmpDevicename), "_%s",devVals->deviceBoard);
-        
+
         size_t fnamelen = strlen(shshSavePath) + 1 + strlen(cecid) + tmpDeviceNameSize + strlen(cpvers) + strlen(cbuild) + strlen(DIRECTORY_DELIMITER_STR"___-.shsh2") + 1;
         fnamelen += devVals->parsedApnonceLen*2;
-        
+
         char *fname = malloc(fnamelen);
         memset(fname, 0, fnamelen);
         size_t prePathLen= strlen(shshSavePath);
         if (shshSavePath[prePathLen-1] == DIRECTORY_DELIMITER_CHR) prePathLen--;
         strncpy(fname, shshSavePath, prePathLen);
-        
+
         snprintf(fname+prePathLen, fnamelen, DIRECTORY_DELIMITER_STR"%s_%s_%s-%s_%s.shsh%s",cecid,tmpDevicename,cpvers,cbuild, apnonce, (*devVals->generator || apticket2) ? "2" : "");
-        
-        
+
+
         FILE *shshfile = fopen(fname, "w");
         if (!shshfile) error("[Error] can't save shsh at %s\n",fname);
         else{
@@ -902,7 +902,7 @@ int isManifestBufSignedForDevice(char *buildManifestBuffer, t_devicevals *devVal
             fclose(shshfile);
             info("Saved shsh blobs!\n");
         }
-        
+
         if (apnonceLen) free(apnonce);
         free(tmpDevicename);
         plist_free(manifest);
@@ -911,7 +911,7 @@ int isManifestBufSignedForDevice(char *buildManifestBuffer, t_devicevals *devVal
         free(cbuild);
         free(data);
     }
-    
+
 error:
     if (tssreq) plist_free(tssreq);
     if (apticket) plist_free(apticket);
@@ -927,7 +927,7 @@ int isManifestSignedForDevice(const char *buildManifestPath, t_devicevals *devVa
     plist_t SupportedProductTypes = NULL;
     plist_t mDevice = NULL;
     char *bufManifest = NULL;
-    
+
     info("[TSSC] opening %s\n",buildManifestPath);
     //filehandling
     FILE *fmanifest = fopen(buildManifestPath, "r");
@@ -939,18 +939,18 @@ int isManifestSignedForDevice(const char *buildManifestPath, t_devicevals *devVa
     bufManifest[fsize] = '\0';
     fread(bufManifest, fsize, 1, fmanifest);
     fclose(fmanifest);
-    
+
     plist_from_xml(bufManifest, (unsigned)strlen(bufManifest), &manifest);
     if (!manifest)
         reterror("[TSSC] failed to load manifest\n");
-    
+
     if (!versVals->version){
         ProductVersion = plist_dict_get_item(manifest, "ProductVersion");
         plist_get_string_val(ProductVersion, (char**)&versVals->version);
     }
     if (!devVals->deviceModel)
         reterror("[TSSC] can't proceed without device info\n");
-    
+
     SupportedProductTypes = plist_dict_get_item(manifest, "SupportedProductTypes");
     if (SupportedProductTypes) {
         for (int i=0; i<plist_array_get_size(SupportedProductTypes); i++) {
@@ -961,12 +961,12 @@ int isManifestSignedForDevice(const char *buildManifestPath, t_devicevals *devVa
                 goto checkedDeviceModel;
         }
     }
-    
+
     reterror("[TSSC] selected device can't be used with that buildmanifest\n");
-    
+
 checkedDeviceModel:
     isSigned = isManifestBufSignedForDevice(bufManifest, devVals, versVals->basebandMode);
-    
+
 error:
     if (manifest) plist_free(manifest);
     if (bufManifest) free(bufManifest);
@@ -981,11 +981,11 @@ int isVersionSignedForDevice(jssytok_t *firmwareTokens, t_iosVersion *versVals, 
         info("[TSSC] version to check \"%s\" seems to be iOS 3 or lower, which did not require SHSH or APTicket.\n\tSkipping checks and returning true.\n",versVals->version);
         return 1;
     }
-    
+
     int isSigned = -1;
     int isSignedOne = 0;
     char *buildManifest = NULL;
-    
+
     t_versionURL *urls = getFirmwareUrls(devVals->deviceModel, versVals, firmwareTokens);
     if (!urls) reterror("[TSSC] ERROR: could not get url for device %s on iOS %s\n",devVals->deviceModel,(!versVals->version ? versVals->buildID : versVals->version));
 
@@ -1002,10 +1002,10 @@ int isVersionSignedForDevice(jssytok_t *firmwareTokens, t_iosVersion *versVals, 
         nocache = 1;
         if (cursigned) {
             info("[TSSC] skipping duplicated build\n");
-            
+
         }else if ((isSignedOne = isManifestBufSignedForDevice(buildManifest, devVals, versVals->basebandMode)) >= 0){
             cursigned |= (isSigned > 0);
-            
+
             isSigned = (isSignedOne > 0 || isSigned > 0);
             if (buildManifest) free(buildManifest), buildManifest = NULL;
             info("iOS %s %s %s signed!\n",u->version,u->buildID,isSignedOne ? "IS" : "IS NOT");
@@ -1015,9 +1015,9 @@ int isVersionSignedForDevice(jssytok_t *firmwareTokens, t_iosVersion *versVals, 
         free(u->version),u->version = NULL;
     }
     free(urls),urls = NULL;
-    
-    
-    
+
+
+
 error:
     nocache = nocacheorig;
     if (buildManifest) free(buildManifest);
@@ -1037,13 +1037,13 @@ char *getFirmwareUrl(const char *deviceModel, t_iosVersion *versVals, jssytok_t 
     char *ret = versions->url;
     free(versions->buildID);
     free(versions->version);
-    
+
     while ((++versions)->url) {
         free(versions->buildID);
         free(versions->version);
         free(versions->url);
     }
-    
+
     free(v);
     return ret;
 }
@@ -1057,7 +1057,7 @@ int printListOfDevices(jssytok_t *tokens){
     int rspn = 0;
     putchar('\n');
     jssytok_t *ctok = jssy_dictGetValueForKey(tokens, "devices");
-    
+
     jssytok_t *tmp = ctok->subval;
     for (size_t i=0; i<ctok->size; tmp = tmp->next,i++) {
         if (!curr){
@@ -1079,7 +1079,7 @@ int printListOfDevices(jssytok_t *tokens){
         }
         printJString(tmp);
         if (++rspn>= MAX_PER_LINE) putchar('\n'), rspn = 0; else putchar(' ');
-        
+
     }
     putchar('\n');
     putchar('\n');
@@ -1091,7 +1091,7 @@ int cmpfunc(const void * a, const void * b){
     char *aa = *(char**)a;
     char *bb = *(char**)b;
     int d;
-    
+
     while(1) {
         d = atoi(bb) - atoi(aa);
         if(d != 0)
@@ -1114,24 +1114,24 @@ int cmpfunc(const void * a, const void * b){
 char **getListOfiOSForDevice(jssytok_t *tokens, const char *device, int isOTA, int *versionCntt){
     //requires free(versions[versionsCnt-1]); and free(versions); after use
     jssytok_t *firmwares = getFirmwaresForDevice(device, tokens, isOTA);
-    
+
     if (!firmwares)
         return error("[TSSC] device %s could not be found in devicelist\n",device),NULL;
-    
+
     int versionsCnt = (int)firmwares->size;
     char **versions = (char**)malloc(versionsCnt * sizeof(char *));
-    
+
     jssytok_t *tmp = firmwares->subval;
     for (int i=0; i<firmwares->size; tmp = tmp->next,i++) {
-        
+
         jssytok_t *ios = jssy_dictGetValueForKey(tmp, "version");
-        
+
         int isBeta = 0;
         jssytok_t *releaseType = NULL;
         if ((releaseType = jssy_dictGetValueForKey(tmp, "releasetype"))) {
             isBeta = (strncmp(releaseType->value, "Beta", releaseType->size) == 0);
         }
-        
+
         versions[--versionsCnt] = (char*)malloc((ios->size+1 + isBeta * strlen("[B]")) * sizeof(char));
         strncpy(versions[versionsCnt], ios->value, ios->size);
         if (isBeta) strncpy(&versions[versionsCnt][ios->size], "[B]", strlen("[B]"));
@@ -1146,10 +1146,10 @@ char **getListOfiOSForDevice(jssytok_t *tokens, const char *device, int isOTA, i
 
 int printListOfiOSForDevice(jssytok_t *tokens, char *device, int isOTA){
 #define MAX_PER_LINE 10
-    
+
     int versionsCnt;
     char **versions = getListOfiOSForDevice(tokens, device, isOTA, &versionsCnt);
-    
+
     int rspn = 0,
         currVer = 0,
         nextVer = 0;
@@ -1159,8 +1159,8 @@ int printListOfiOSForDevice(jssytok_t *tokens, char *device, int isOTA){
             free(versions[i-1]);
             if (res == 0) continue;
         }
-        
-        
+
+
         nextVer = atoi(versions[i]);
         if (currVer && currVer != nextVer) printf("\n"), rspn = 0;
         currVer = nextVer;
@@ -1172,7 +1172,7 @@ int printListOfiOSForDevice(jssytok_t *tokens, char *device, int isOTA){
     }
     free(versions[versionsCnt-1]);
     free(versions);
-    
+
     printf("\n\n");
     return 0;
 #undef MAX_PER_LINE
@@ -1183,29 +1183,29 @@ int printListOfiOSForDevice(jssytok_t *tokens, char *device, int isOTA){
 
 jssytok_t *getFirmwaresForDevice(const char *device, jssytok_t *tokens, int isOta){
     jssytok_t *ctok = (isOta) ? tokens : jssy_dictGetValueForKey(tokens, "devices");
-    
+
     jssytok_t *tmp = ctok->subval;
     for (int i=0; i<ctok->size; tmp = tmp->next,i++)
         if (strncasecmp(device, tmp->value, tmp->size) == 0)
             return jssy_dictGetValueForKey(tmp->subval, "firmwares");
-    
+
     return NULL;
 }
 
 int checkFirmwareForDeviceExists(t_devicevals *devVals, t_iosVersion *versVals, jssytok_t *tokens){
-    
+
     jssytok_t *firmwares = getFirmwaresForDevice(devVals->deviceModel, tokens, versVals->isOta);
     if (!firmwares)
         return 0;
-    
+
     const char *versstr = (versVals->buildID) ? versVals->buildID : versVals->version;
     jssytok_t *tt = firmwares->subval;
     for (int i=0; i<firmwares->size;tt = tt->next,i++) {
-        
+
         jssytok_t *versiont = jssy_dictGetValueForKey(tt, (versVals->buildID) ? "buildid" : "version");
         if (versiont->size == strlen(versstr) && strncmp(versstr, versiont->value, versiont->size) == 0)
             return 1;
     }
-    
+
     return 0;
 }
