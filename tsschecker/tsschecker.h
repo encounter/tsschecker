@@ -1,13 +1,13 @@
 //
-//  ipswme.h
+//  tsschecker.h
 //  tsschecker
 //
 //  Created by tihmstar on 07.01.16.
 //  Copyright © 2016 tihmstar. All rights reserved.
 //
 
-#ifndef tsscheker_h
-#define tsscheker_h
+#ifndef tsschecker_h
+#define tsschecker_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +17,7 @@ extern "C" {
 #include "jssy.h"
 #include <plist/plist.h>
 #include "tss.h"
-#include "all_tsschecker.h"
+#include "debug.h"
     
 extern int dbglog;
 extern int print_tss_response;
@@ -100,10 +100,8 @@ int isManifestSignedForDevice(const char *buildManifestPath, t_devicevals *devVa
 int isManifestBufSignedForDevice(char *buildManifestBuffer, t_devicevals *devVals, t_basebandMode basebandMode);
 int isVersionSignedForDevice(jssytok_t *firmwareTokens, t_iosVersion *versVals, t_devicevals *devVals);
 
-
 jssytok_t *getFirmwaresForDevice(const char *device, jssytok_t *tokens, int isOta);
 
-    
 int checkFirmwareForDeviceExists(t_devicevals *devVals, t_iosVersion *versVals, jssytok_t *tokens);
 
 int downloadPartialzip(const char *url, const char *file, const char *dst);
@@ -113,10 +111,8 @@ const char *getModelFromBoardconfig(const char *boardconfig);
 plist_t getBuildidentity(plist_t buildManifest, const char *model, int isUpdateInstall);
 plist_t getBuildidentityWithBoardconfig(plist_t buildManifest, const char *boardconfig, int isUpdateInstall);
 
-
-    
 #ifdef __cplusplus
 }
 #endif
     
-#endif /* tsscheker_h */
+#endif /* tsschecker_h */

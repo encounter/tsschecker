@@ -21,18 +21,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef IDEVICERESTORE_TSS_H
-#define IDEVICERESTORE_TSS_H
+#ifndef TSS_H
+#define TSS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <plist/plist.h>
-#include "all_tsschecker.h"
+#include "debug.h"
 
 extern int print_tss_request;
-
     
 /* parameters */
 int tss_parameters_add_from_manifest(plist_t parameters, plist_t build_identity);
@@ -45,7 +44,8 @@ int tss_request_add_common_tags(plist_t request, plist_t parameters, plist_t ove
 int tss_request_add_ap_tags(plist_t request, plist_t parameters, plist_t overrides);
 int tss_request_add_baseband_tags(plist_t request, plist_t parameters, plist_t overrides);
 int tss_request_add_se_tags(plist_t request, plist_t parameters, plist_t overrides);
-int tss_request_add_savage_tags(plist_t request, plist_t parameters, plist_t overrides);
+int tss_request_add_savage_tags(plist_t request, plist_t parameters, plist_t overrides, char **component_name);
+int tss_request_add_yonkers_tags(plist_t request, plist_t parameters, plist_t overrides, char **component_name);
 
 int tss_request_add_ap_img4_tags(plist_t request, plist_t parameters);
 int tss_request_add_ap_img3_tags(plist_t request, plist_t parameters);
@@ -69,4 +69,4 @@ char* ecid_to_string(uint64_t ecid);
 }
 #endif
 
-#endif
+#endif /* tss_h */
